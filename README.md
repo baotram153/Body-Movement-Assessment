@@ -66,13 +66,13 @@ Run training from the repository root:
   --model-dir artifacts
 ```
 
-Training fits and compares three models on the validation split:
+Training first fits and compares three models on the validation split:
 
 - `logistic_regression`
 - `random_forest`
 - `linear_svm`
 
-The command prints a validation accuracy comparison, saves all three trained models, and prints test reports.
+After validation comparison, each model is refit on `train + validation` before it is saved. The command prints a validation accuracy comparison, saves all three final trained models, and prints test reports.
 
 Saved model files:
 

@@ -1,10 +1,12 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
+from sklearn.base import clone
 from sklearn.metrics import accuracy_score, classification_report
 
 from .model import build_activity_classifiers, save_model_to_file
-from .data import load_train_val_split, load_test_split
+from .data import DatasetSplit, load_train_val_split, load_test_split
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
@@ -48,14 +50,24 @@ def save_trained_model(model_name: str, model, model_dir: Path) -> Path:
     return model_path
 
 
+def combine_splits(first_split, second_split) -> DatasetSplit:
+    return DatasetSplit(
+        windows=np.concatenate([first_split.windows, second_split.windows], axis=0),
+        labels=np.concatenate([first_split.labels, second_split.labels], axis=0),
+        subjects=np.concatenate([first_split.subjects, second_split.subjects], axis=0),
+    )
+
+
 def main():
     args = parse_args()
     train_split, val_split = load_train_val_split(root_dir=args.data_root, random_state=args.random_state)
     test_split = load_test_split(root_dir=args.data_root)
+    full_train_split = combine_splits(train_split, val_split)
     model_dir = Path(args.model_dir)
 
     print(f"Train samples: {train_split.windows.shape}")
     print(f"Validation samples: {val_split.windows.shape}")
+    print(f"Final train samples: {full_train_split.windows.shape}")
     print(f"Test samples: {test_split.windows.shape}")
 
     results = []
@@ -65,9 +77,13 @@ def main():
         train_model(train_split, model)
         val_predictions = model.predict(val_split.windows)
         val_accuracy = accuracy_score(val_split.labels, val_predictions)
-        model_path = save_trained_model(model_name, model, model_dir)
-        results.append((model_name, val_accuracy, model, model_path))
         print(f"Validation accuracy: {val_accuracy:.4f}")
+
+        print("Refitting on train + validation before saving...")
+        final_model = clone(model)
+        train_model(full_train_split, final_model)
+        model_path = save_trained_model(model_name, final_model, model_dir)
+        results.append((model_name, val_accuracy, final_model, model_path))
         print(f"Saved model to: {model_path}")
 
     results.sort(key=lambda result: result[1], reverse=True)
