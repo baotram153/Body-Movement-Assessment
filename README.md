@@ -63,7 +63,24 @@ Run training from the repository root:
 ```bash
 .venv/bin/python -m src.train \
   --data-root "datasets/UCI HAR Dataset" \
-  --model-out artifacts/activity_classifier.joblib
+  --model-dir artifacts
+```
+
+Training fits and compares three models on the validation split:
+
+- `logistic_regression`
+- `random_forest`
+- `linear_svm`
+
+The command prints a validation accuracy comparison, saves all three trained models, and prints test reports.
+
+Saved model files:
+
+```text
+artifacts/
+├── logistic_regression.joblib
+├── random_forest.joblib
+└── linear_svm.joblib
 ```
 
 ## Evaluate
@@ -73,7 +90,7 @@ Specify the target activity with the flag `--target`, this activity will be cons
 ```bash
 .venv/bin/python -m src.evaluate \
   --data-dir "datasets/UCI HAR Dataset" \
-  --model-path artifacts/activity_classifier.joblib \
+  --model-path artifacts/logistic_regression.joblib \
   --target WALKING
 ```
 
