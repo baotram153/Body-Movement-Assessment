@@ -39,6 +39,12 @@ If you use `uv`, install dependencies with:
 uv sync
 ```
 
+To include the optional CNN dependency with `uv`, run:
+
+```bash
+uv sync --extra cnn
+```
+
 If you do not have `uv`, create a Python virtual environment and install the project dependencies with `pip`:
 
 ```bash
@@ -46,6 +52,12 @@ python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
 python -m pip install -e .
+```
+
+To train the optional 1D CNN on raw inertial time series, install the CNN extra:
+
+```bash
+python -m pip install -e ".[cnn]"
 ```
 
 On Windows PowerShell, activate the environment with:
@@ -66,13 +78,15 @@ Run training from the repository root:
   --model-dir artifacts
 ```
 
-Training first fits and compares three models on the validation split:
+Training first fits and compares the feature-based models on the validation split:
 
 - `logistic_regression`
 - `random_forest`
 - `linear_svm`
 
-After validation comparison, each model is refit on `train + validation` before it is saved. The command prints a validation accuracy comparison, saves all three final trained models, and prints test reports.
+If PyTorch is installed, training also fits `inertial_1d_cnn` on the nine raw `Inertial Signals` channels with input shape `(samples, 9, 128)`. If PyTorch is not installed, the CNN step is skipped and the feature-based models still run.
+
+After validation comparison, each model is refit on `train + validation` before it is saved. The command prints validation accuracy, saves the final trained models, and prints test reports.
 
 Saved model files:
 
@@ -80,7 +94,8 @@ Saved model files:
 artifacts/
 ├── logistic_regression.joblib
 ├── random_forest.joblib
-└── linear_svm.joblib
+├── linear_svm.joblib
+└── inertial_1d_cnn.joblib
 ```
 
 ## Evaluate
@@ -91,6 +106,16 @@ Specify the target activity with the flag `--target`, this activity will be cons
 .venv/bin/python -m src.evaluate \
   --data-dir "datasets/UCI HAR Dataset" \
   --model-path artifacts/logistic_regression.joblib \
+  --target WALKING
+```
+
+For the CNN model, use inertial input:
+
+```bash
+.venv/bin/python -m src.evaluate \
+  --data-dir "datasets/UCI HAR Dataset" \
+  --model-path artifacts/inertial_1d_cnn.joblib \
+  --input-kind inertial \
   --target WALKING
 ```
 

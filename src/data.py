@@ -9,6 +9,17 @@ FEATURE_COUNT = 561
 SIGNAL_WINDOW_SIZE = 128
 SAMPLE_RATE_HZ = 50
 DEFAULT_STRIDE = 64
+INERTIAL_SIGNAL_CHANNELS = (
+    "body_acc_x",
+    "body_acc_y",
+    "body_acc_z",
+    "body_gyro_x",
+    "body_gyro_y",
+    "body_gyro_z",
+    "total_acc_x",
+    "total_acc_y",
+    "total_acc_z",
+)
 
 @dataclass
 class DatasetSplit:
@@ -58,6 +69,27 @@ def _load_split(data_dir: Path, split: str) -> DatasetSplit:
     return DatasetSplit(windows=X, labels=y, subjects=subjects)
 
 
+def _load_inertial_split(data_dir: Path, split: str) -> DatasetSplit:
+    y_path = data_dir / f"y_{split}.txt"
+    subjects_path = data_dir / f"subject_{split}.txt"
+
+    signals = [
+        _read_signal(data_dir, split=split, channel=channel)
+        for channel in INERTIAL_SIGNAL_CHANNELS
+    ]
+    X = np.stack(signals, axis=1)
+
+    if not y_path.exists():
+        raise FileNotFoundError(f"File not found: {y_path}")
+    y = np.loadtxt(y_path, dtype=np.int32)
+
+    if not subjects_path.exists():
+        raise FileNotFoundError(f"File not found: {subjects_path}")
+    subjects = np.loadtxt(subjects_path, dtype=np.int32)
+
+    return DatasetSplit(windows=X, labels=y, subjects=subjects)
+
+
 def load_train_val_split(root_dir: Path, train_data_dir: Path = Path("train"), random_state: int = 2026) -> Tuple[DatasetSplit, DatasetSplit]:
     root_path = Path(root_dir)
     data_path = root_path / train_data_dir
@@ -76,4 +108,25 @@ def load_test_split(root_dir: Path, test_data_dir: Path = Path("test")) -> Datas
     root_path = Path(root_dir)
     data_path = root_path / test_data_dir
     test_split = _load_split(data_path, split="test")
+    return test_split
+
+
+def load_inertial_train_val_split(root_dir: Path, train_data_dir: Path = Path("train"), random_state: int = 2026) -> Tuple[DatasetSplit, DatasetSplit]:
+    root_path = Path(root_dir)
+    data_path = root_path / train_data_dir
+    train_split = _load_inertial_split(data_path, split="train")
+
+    X_train, X_val, y_train, y_val, subjects_train, subjects_val = train_test_split(
+        train_split.windows, train_split.labels, train_split.subjects, test_size=0.2, random_state=random_state
+    )
+
+    reduced_train_split = DatasetSplit(windows=X_train, labels=y_train, subjects=subjects_train)
+    val_split = DatasetSplit(windows=X_val, labels=y_val, subjects=subjects_val)
+    return reduced_train_split, val_split
+
+
+def load_inertial_test_split(root_dir: Path, test_data_dir: Path = Path("test")) -> DatasetSplit:
+    root_path = Path(root_dir)
+    data_path = root_path / test_data_dir
+    test_split = _load_inertial_split(data_path, split="test")
     return test_split

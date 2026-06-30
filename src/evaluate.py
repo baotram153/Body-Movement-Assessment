@@ -12,7 +12,7 @@ from sklearn.metrics import (
 )
 
 from .constants import ACTIVE_ACTIVITIES, STATUS_LABELS, ACTIVITY_NAME_TO_ID
-from .data import load_test_split
+from .data import load_inertial_test_split, load_test_split
 from .model import load_model_from_file
 from .status_mapping import map_many_to_status
 
@@ -30,6 +30,12 @@ def parse_args() -> argparse.Namespace:
         help=(
             "One of WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, "
         ),
+    )
+    parser.add_argument(
+        "--input-kind",
+        choices=("features", "inertial"),
+        default="features",
+        help="Use `features` for 561-feature models and `inertial` for the 1D CNN.",
     )
     return parser.parse_args()
 
@@ -69,7 +75,10 @@ def evaluate_target(y_true_activity: np.ndarray, y_pred_activity: np.ndarray, ta
 
 def main() -> None:
     args = parse_args()
-    test = load_test_split(root_dir=args.data_dir)
+    if args.input_kind == "inertial":
+        test = load_inertial_test_split(root_dir=args.data_dir)
+    else:
+        test = load_test_split(root_dir=args.data_dir)
     model = load_model_from_file(args.model_path)
     activity_predictions = model.predict(test.windows)
 
