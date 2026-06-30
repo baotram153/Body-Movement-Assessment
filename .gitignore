@@ -10,4 +10,6 @@ wheels/
 .venv
 
 datasets/*
+!datasets/.gitkeep
 artifacts/*
+!artifacts/.gitkeep
