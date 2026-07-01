@@ -127,13 +127,14 @@ def evaluate_latency(
         durations_ms.append((perf_counter() - start) * 1000)
 
     durations = np.array(durations_ms)
-    print("\n=== Pipeline Latency (model prediction + status mapping)===")
+    print("\n=== Pipeline Latency (model prediction + status mapping) ===")
     print(f"Batch size: {actual_batch_size}")
     print(f"Warmup runs: {warmup}")
     print(f"Timed runs: {repeats}")
     print(f"Mean batch latency: {durations.mean():.4f} ms")
     print(f"Median batch latency: {np.median(durations):.4f} ms")
     print(f"P95 batch latency: {np.percentile(durations, 95):.4f} ms")
+    print(f"Max batch latency: {durations.max():.4f} ms")
     print(f"Mean per-sample latency: {durations.mean() / actual_batch_size:.4f} ms")
 
 

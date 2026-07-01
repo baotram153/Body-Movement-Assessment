@@ -131,7 +131,7 @@ Valid targets are:
 
 The evaluator prints:
 
-- pipeline latency summary with mean, median, P95, and per-sample latency
+- pipeline latency summary with mean, median, P95, max, and per-sample latency
 - six-class activity accuracy
 - six-class classification report
 - status accuracy for the selected target
