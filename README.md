@@ -106,6 +106,8 @@ Specify the target activity with the flag `--target`, this activity will be cons
 .venv/bin/python -m src.evaluate \
   --data-dir "datasets/UCI HAR Dataset" \
   --model-path artifacts/logistic_regression.joblib \
+  --latency-batch-size 1 \
+  --latency-repeats 50 \
   --target WALKING
 ```
 
@@ -116,6 +118,8 @@ For the CNN model, use inertial input:
   --data-dir "datasets/UCI HAR Dataset" \
   --model-path artifacts/inertial_1d_cnn.joblib \
   --input-kind inertial \
+  --latency-batch-size 1 \
+  --latency-repeats 50 \
   --target WALKING
 ```
 
@@ -127,11 +131,21 @@ Valid targets are:
 
 The evaluator prints:
 
+- pipeline latency summary with mean, median, P95, and per-sample latency
 - six-class activity accuracy
 - six-class classification report
 - status accuracy for the selected target
 - status classification report
 - status confusion matrix
+
+Latency options:
+
+- `--latency-batch-size`: number of samples per timed prediction call
+- `--latency-warmup`: number of untimed warmup prediction calls
+- `--latency-repeats`: number of timed prediction calls
+- `--skip-latency`: disable latency measurement
+
+Latency is measured for the full inference pipeline: model prediction plus target-conditioned status mapping.
 
 ## Notes
 
