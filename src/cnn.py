@@ -56,6 +56,20 @@ class InertialCnnClassifier:
 
         return SmallInertialCnn()
 
+    def get_params(self, deep: bool = True) -> dict:
+        return {
+            "random_seed": self.random_seed,
+            "epochs": self.epochs,
+            "batch_size": self.batch_size,
+            "learning_rate": self.learning_rate,
+            "device": self.device,
+        }
+
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
     def fit(self, X: np.ndarray, y: np.ndarray):
         torch.manual_seed(self.random_seed)
 
@@ -65,6 +79,7 @@ class InertialCnnClassifier:
         dataset = TensorDataset(X_tensor, y_tensor)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True)
 
+        self.classes_ = np.arange(1, int(np.max(y)) + 1, dtype=np.int64)
         self.input_channels_ = X.shape[1]
         self.model_ = self._build_model(input_channels=self.input_channels_, class_count=len(self.classes_)).to(device)
         criterion = nn.CrossEntropyLoss()

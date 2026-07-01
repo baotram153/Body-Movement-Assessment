@@ -75,8 +75,16 @@ Run training from the repository root:
 ```bash
 .venv/bin/python -m src.train \
   --data-root "datasets/UCI HAR Dataset" \
-  --model-dir artifacts
+  --model-dir artifacts \
+  --label-mode both \
+  --target WALKING
 ```
+
+The `--label-mode` option controls the activity-label experiment:
+
+- `six_class`: original UCI labels `1..6`
+- `four_class`: `WALKING`, `WALKING_UPSTAIRS`, `WALKING_DOWNSTAIRS`, and one collapsed `REST` class
+- `both`: train and compare both label modes
 
 Training first fits and compares the feature-based models on the validation split:
 
@@ -86,16 +94,20 @@ Training first fits and compares the feature-based models on the validation spli
 
 If PyTorch is installed, training also fits `inertial_1d_cnn` on the nine raw `Inertial Signals` channels with input shape `(samples, 9, 128)`. If PyTorch is not installed, the CNN step is skipped and the feature-based models still run.
 
-After validation comparison, each model is refit on `train + validation` before it is saved. The command prints validation accuracy, saves the final trained models, and prints test reports.
+After validation comparison, each model is refit on `train + validation` before it is saved. The command prints validation class accuracy and validation status accuracy. The validation comparison is ranked by status accuracy because six-class and four-class class accuracy are not directly comparable.
 
 Saved model files:
 
 ```text
 artifacts/
-├── logistic_regression.joblib
-├── random_forest.joblib
-├── linear_svm.joblib
-└── inertial_1d_cnn.joblib
+├── six_class_logistic_regression.joblib
+├── six_class_random_forest.joblib
+├── six_class_linear_svm.joblib
+├── four_class_logistic_regression.joblib
+├── four_class_random_forest.joblib
+├── four_class_linear_svm.joblib
+├── six_class_inertial_1d_cnn.joblib
+└── four_class_inertial_1d_cnn.joblib
 ```
 
 ## Evaluate
@@ -105,7 +117,20 @@ Specify the target activity with the flag `--target`, this activity will be cons
 ```bash
 .venv/bin/python -m src.evaluate \
   --data-dir "datasets/UCI HAR Dataset" \
-  --model-path artifacts/logistic_regression.joblib \
+  --model-path artifacts/six_class_logistic_regression.joblib \
+  --label-mode six_class \
+  --latency-batch-size 1 \
+  --latency-repeats 50 \
+  --target WALKING
+```
+
+For a four-class model, use collapsed four-class labels during evaluation:
+
+```bash
+.venv/bin/python -m src.evaluate \
+  --data-dir "datasets/UCI HAR Dataset" \
+  --model-path artifacts/four_class_logistic_regression.joblib \
+  --label-mode four_class \
   --latency-batch-size 1 \
   --latency-repeats 50 \
   --target WALKING
@@ -116,8 +141,9 @@ For the CNN model, use inertial input:
 ```bash
 .venv/bin/python -m src.evaluate \
   --data-dir "datasets/UCI HAR Dataset" \
-  --model-path artifacts/inertial_1d_cnn.joblib \
+  --model-path artifacts/six_class_inertial_1d_cnn.joblib \
   --input-kind inertial \
+  --label-mode six_class \
   --latency-batch-size 1 \
   --latency-repeats 50 \
   --target WALKING
@@ -132,8 +158,8 @@ Valid targets are:
 The evaluator prints:
 
 - pipeline latency summary with mean, median, P95, max, and per-sample latency
-- six-class activity accuracy
-- six-class classification report
+- activity accuracy for the selected label mode
+- activity classification report for the selected label mode
 - status accuracy for the selected target
 - status classification report
 - status confusion matrix

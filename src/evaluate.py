@@ -13,7 +13,7 @@ from sklearn.metrics import (
 )
 
 from .constants import ACTIVE_ACTIVITIES, STATUS_LABELS, ACTIVITY_NAME_TO_ID
-from .data import load_inertial_test_split, load_test_split
+from .data import load_inertial_test_split, load_test_split, relabel_split
 from .model import load_model_from_file
 from .status_mapping import map_many_to_status
 
@@ -37,6 +37,12 @@ def parse_args() -> argparse.Namespace:
         choices=("features", "inertial"),
         default="features",
         help="Use `features` for 561-feature models and `inertial` for the 1D CNN.",
+    )
+    parser.add_argument(
+        "--label-mode",
+        choices=("six_class", "four_class"),
+        default="six_class",
+        help="Use original 6-class labels or collapsed 4-class labels for evaluation.",
     )
     parser.add_argument(
         "--latency-batch-size",
@@ -144,6 +150,7 @@ def main() -> None:
         test = load_inertial_test_split(root_dir=args.data_dir)
     else:
         test = load_test_split(root_dir=args.data_dir)
+    test = relabel_split(test, args.label_mode)
     model = load_model_from_file(args.model_path)
     activity_predictions = model.predict(test.windows)
 
@@ -166,7 +173,7 @@ def main() -> None:
         )
 
     print(
-        f"Six-class activity accuracy: "
+        f"{args.label_mode} activity accuracy: "
         f"{accuracy_score(test.labels, activity_predictions):.4f}"
     )
     print(

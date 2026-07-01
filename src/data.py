@@ -5,6 +5,8 @@ from pathlib import Path
 
 from sklearn.model_selection import train_test_split
 
+from .constants import ACTIVE_ACTIVITY_IDS, FOUR_CLASS_REST_ID
+
 FEATURE_COUNT = 561
 SIGNAL_WINDOW_SIZE = 128
 SAMPLE_RATE_HZ = 50
@@ -27,6 +29,23 @@ class DatasetSplit:
     windows: np.ndarray
     labels: np.ndarray
     subjects: np.ndarray
+
+
+def collapse_labels_to_four_class(labels: np.ndarray) -> np.ndarray:
+    labels = np.asarray(labels, dtype=np.int32)
+    return np.where(np.isin(labels, list(ACTIVE_ACTIVITY_IDS)), labels, FOUR_CLASS_REST_ID).astype(np.int32)
+
+
+def relabel_split(dataset_split: DatasetSplit, label_mode: str) -> DatasetSplit:
+    if label_mode == "six_class":
+        return dataset_split
+    if label_mode == "four_class":
+        return DatasetSplit(
+            windows=dataset_split.windows,
+            labels=collapse_labels_to_four_class(dataset_split.labels),
+            subjects=dataset_split.subjects,
+        )
+    raise ValueError(f"Invalid label mode: {label_mode}")
 
 
 def _read_signal(split_dir: Path, split: str, channel: str) -> np.ndarray:

@@ -25,8 +25,10 @@ REST_ACTIVITIES = frozenset({
     "LAYING",
 })
 
-REST_ACTIVITIE_IDS = frozenset({
+REST_ACTIVITY_IDS = frozenset({
     ACTIVITY_NAME_TO_ID[activity] for activity in REST_ACTIVITIES
 })
+
+FOUR_CLASS_REST_ID = 4
 
 STATUS_LABELS = ("correct", "compensatory", "rest")
